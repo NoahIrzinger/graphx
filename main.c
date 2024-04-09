@@ -4,6 +4,13 @@
 
 static unsigned int PIXEL_LENGTH = 12;
 
+struct Point
+{
+    int x_pos;
+    int y_pos;
+    size_t value;
+};
+
 void write_to_ppm_file(char path[], int pixels_width, int pixels_height, char raster_data[])
 {
 
@@ -58,24 +65,50 @@ void fill_with_colour(int hex_code, int *hex_values, int raster_length)
     }
 }
 
-void construct_graph_plot(int row_length, int pixels_width, int pixels_height, int *hex_values)
+void construct_graph_plot(int row_length, int pixels_width, int pixels_height, int pixels_plot_interval, int *hex_values, struct Point points[])
 {
     int PLOT_Y_AXIS_OFFSET = 5;
     int PLOT_Y_AXIS_WIDTH = 1;
     int PLOT_X_AXIS_OFFSET = 5;
     int PLOT_X_AXIS_WIDTH = 1;
 
-    for (int i = 0; i < pixels_height; i++)
+    for (int row_pos = 0; row_pos < pixels_height; row_pos++)
     {
-        for (int j = 0; j < pixels_width; j++)
+        for (int col_pos = 0; col_pos < pixels_width; col_pos++)
         {
-            int hex_index = i * row_length + j;
+            int hex_index = row_pos * row_length + col_pos;
 
-            if (j == PLOT_Y_AXIS_OFFSET)
+            if (col_pos == PLOT_Y_AXIS_OFFSET)
             {
                 hex_values[hex_index] = 0x000000;
             }
-            if (i == pixels_height - PLOT_X_AXIS_OFFSET)
+            if (row_pos == pixels_height - PLOT_X_AXIS_OFFSET)
+            {
+                hex_values[hex_index] = 0x000000;
+            }
+            if (
+                row_pos % pixels_plot_interval == 0
+                && (
+                    col_pos == PLOT_Y_AXIS_OFFSET - 1 
+                    || (
+                        col_pos > PLOT_Y_AXIS_OFFSET
+                        && col_pos <= PLOT_Y_AXIS_OFFSET + 3
+                    )
+                )
+            )
+            {
+                hex_values[hex_index] = 0x000000;
+            }
+            if (
+                col_pos % pixels_plot_interval == 0
+                && (
+                    row_pos == (pixels_height - PLOT_X_AXIS_OFFSET + 1) 
+                    || (
+                        row_pos <= pixels_height - PLOT_X_AXIS_OFFSET
+                        && row_pos > (pixels_height - PLOT_X_AXIS_OFFSET -3)
+                    )
+                )
+            )
             {
                 hex_values[hex_index] = 0x000000;
             }
@@ -91,6 +124,12 @@ int main()
 
     int pixels_width = 100;
     int pixels_height = 100;
+    int pixels_plot_interval = 10;
+
+    struct Point points[1];
+    points[0].value = 1;
+    points[0].x_pos = 1;
+    points[0].y_pos = 1;
 
     int row_length = (pixels_width * PIXEL_LENGTH) + 1;   // the number of characters representing pixels in a row times 9 digits for the triplet and each of their white spaces
     int raster_length = (row_length * pixels_height) + 1; // the number of characters in total as a single line this is the length of all the pixels
@@ -103,7 +142,7 @@ int main()
 
     fill_with_colour(hex_code, hex_values, raster_length);
 
-    construct_graph_plot(row_length, pixels_width, pixels_height, hex_values);
+    construct_graph_plot(row_length, pixels_width, pixels_height, pixels_plot_interval, hex_values, points);
 
     paint_raster_data(raster_data, row_length, hex_values, pixels_width, pixels_height);
 
