@@ -57,7 +57,7 @@ void paint_raster(char *raster, int raster_row_length, int hex_values[], int gra
 
     strcat(raster, "\0");
 
-    printf("%s\n", raster);
+    // printf("%s\n", raster);
 }
 
 void generate_hexcodes(int *hexcodes, int raster_row_length, int graph_pixels_width, int graph_pixels_height, int graph_tick_pixels_interval, struct Point points[])
@@ -97,11 +97,44 @@ void generate_hexcodes(int *hexcodes, int raster_row_length, int graph_pixels_wi
     }
 }
 
-void set_graph_dimensions(unsigned int *graph_pixels_width, unsigned int *graph_pixels_height, unsigned int *graph_tick_pixels_interval) {
+void set_graph_dimensions(unsigned int *graph_pixels_width, unsigned int *graph_pixels_height, unsigned int *graph_tick_pixels_interval, struct Point points[])
+{
+    int x_max = points[0].x_pos, x_min = points[0].x_pos, y_max = points[0].y_pos, y_min = points[0].y_pos;
+
+    int points_length = sizeof(&points) / sizeof(&points[0]);
+
+    for (int i = 0; i < points_length; i++)
+    {
+        if (points[i].x_pos > x_max)
+        {
+            x_max = points[i].x_pos;
+        }
+        if (points[i].x_pos < x_min)
+        {
+            x_min = points[i].x_pos;
+        }
+        if (points[i].y_pos > y_max)
+        {
+            y_max = points[i].y_pos;
+        }
+        if (points[i].y_pos < y_min)
+        {
+            y_min = points[i].y_pos;
+        }
+    }
+
+    unsigned int scaling_factor = 2;
+
+    unsigned int x_axis_size = abs(x_max - x_min) * scaling_factor;
+    unsigned int y_axis_size = abs(y_max - y_min) * scaling_factor;
 
     *graph_pixels_width = GRAPH_PIXELS_DEFAULT_WIDTH;
     *graph_pixels_height = GRAPH_PIXELS_DEFAULT_HEIGHT;
-    *graph_tick_pixels_interval = GRAPH_TICK_PIXELS_DEFAULT_INTERVAL; 
+    *graph_tick_pixels_interval = GRAPH_TICK_PIXELS_DEFAULT_INTERVAL;
+}
+
+int validate_input(int *x_coordinates, int *y_coordinates, int *values)
+{
 }
 
 int main()
@@ -110,16 +143,20 @@ int main()
 
     int colour_background = 0x00FF00;
 
-    struct Point points[1];
+    struct Point points[2];
     points[0].value = 1;
     points[0].x_pos = 1;
     points[0].y_pos = 1;
+
+    points[1].value = 1;
+    points[1].x_pos = 2;
+    points[1].y_pos = 2;
 
     unsigned int graph_pixels_width;
     unsigned int graph_pixels_height;
     unsigned int graph_tick_pixels_interval;
 
-    set_graph_dimensions(&graph_pixels_width, &graph_pixels_height, &graph_tick_pixels_interval);
+    set_graph_dimensions(&graph_pixels_width, &graph_pixels_height, &graph_tick_pixels_interval, points);
 
     int raster_row_length = (graph_pixels_width * PIXEL_LENGTH) + 1;   // the number of characters representing pixels in a row times 9 digits for the triplet and each of their white spaces
     int raster_length = (raster_row_length * graph_pixels_height) + 1; // the number of characters in total as a single line this is the length of all the pixels
