@@ -10,8 +10,10 @@ static unsigned int GRAPH_TICK_PIXELS_DEFAULT_INTERVAL = 10;
 
 struct Point
 {
-    int x_pos;
-    int y_pos;
+    int data_x_pos;
+    int data_y_pos;
+    int graph_x_pos;
+    int graph_y_pos;
     size_t value;
 };
 
@@ -60,7 +62,7 @@ void paint_raster(char *raster, int raster_row_length, int hex_values[], int gra
     // printf("%s\n", raster);
 }
 
-void generate_hexcodes(int *hexcodes, int raster_row_length, int graph_pixels_width, int graph_pixels_height, int graph_tick_pixels_interval, struct Point points[])
+void generate_hexcodes(int *hexcodes, int raster_row_length, int graph_pixels_width, int graph_pixels_height, int graph_tick_pixels_interval, struct Point points[], int points_length)
 {
     int PLOT_Y_AXIS_OFFSET = 5;
     int PLOT_Y_AXIS_WIDTH = 1;
@@ -73,8 +75,10 @@ void generate_hexcodes(int *hexcodes, int raster_row_length, int graph_pixels_wi
         {
             int hex_index = row_pos * raster_row_length + col_pos;
 
+            // fill background
             hexcodes[hex_index] = 0x00FF00;
 
+            // x,y plaines
             if (col_pos == PLOT_Y_AXIS_OFFSET)
             {
                 hexcodes[hex_index] = 0x000000;
@@ -83,6 +87,7 @@ void generate_hexcodes(int *hexcodes, int raster_row_length, int graph_pixels_wi
             {
                 hexcodes[hex_index] = 0x000000;
             }
+            // ticks on the axis
             if (
                 row_pos % graph_tick_pixels_interval == 0 && (col_pos == PLOT_Y_AXIS_OFFSET - 1 || (col_pos > PLOT_Y_AXIS_OFFSET && col_pos <= PLOT_Y_AXIS_OFFSET + 3)))
             {
@@ -93,48 +98,27 @@ void generate_hexcodes(int *hexcodes, int raster_row_length, int graph_pixels_wi
             {
                 hexcodes[hex_index] = 0x000000;
             }
+            // plot points
+            for (int i = 0; i < points_length; i++)
+            {
+                if (row_pos == graph_pixels_height - points[i].graph_x_pos && col_pos == points[i].graph_y_pos)
+                {
+                    hexcodes[hex_index] = 0x000000;
+                }
+            }
+
+            // scale up last
         }
     }
 }
 
-void set_graph_dimensions(unsigned int *graph_pixels_width, unsigned int *graph_pixels_height, unsigned int *graph_tick_pixels_interval, struct Point points[])
+void calculate_graph_positions(struct Point *points, int points_length, int graph_tick_pixels_interval)
 {
-    int x_max = points[0].x_pos, x_min = points[0].x_pos, y_max = points[0].y_pos, y_min = points[0].y_pos;
-
-    int points_length = sizeof(&points) / sizeof(&points[0]);
-
     for (int i = 0; i < points_length; i++)
     {
-        if (points[i].x_pos > x_max)
-        {
-            x_max = points[i].x_pos;
-        }
-        if (points[i].x_pos < x_min)
-        {
-            x_min = points[i].x_pos;
-        }
-        if (points[i].y_pos > y_max)
-        {
-            y_max = points[i].y_pos;
-        }
-        if (points[i].y_pos < y_min)
-        {
-            y_min = points[i].y_pos;
-        }
+        points[i].graph_x_pos = points[i].data_x_pos * graph_tick_pixels_interval;
+        points[i].graph_y_pos = points[i].data_y_pos * graph_tick_pixels_interval;
     }
-
-    unsigned int scaling_factor = 2;
-
-    unsigned int x_axis_size = abs(x_max - x_min) * scaling_factor;
-    unsigned int y_axis_size = abs(y_max - y_min) * scaling_factor;
-
-    *graph_pixels_width = GRAPH_PIXELS_DEFAULT_WIDTH;
-    *graph_pixels_height = GRAPH_PIXELS_DEFAULT_HEIGHT;
-    *graph_tick_pixels_interval = GRAPH_TICK_PIXELS_DEFAULT_INTERVAL;
-}
-
-int validate_input(int *x_coordinates, int *y_coordinates, int *values)
-{
 }
 
 int main()
@@ -143,20 +127,36 @@ int main()
 
     int colour_background = 0x00FF00;
 
-    struct Point points[2];
+    struct Point points[5];
     points[0].value = 1;
-    points[0].x_pos = 1;
-    points[0].y_pos = 1;
+    points[0].data_x_pos = 2;
+    points[0].data_y_pos = 2;
 
     points[1].value = 1;
-    points[1].x_pos = 2;
-    points[1].y_pos = 2;
+    points[1].data_x_pos = 3;
+    points[1].data_y_pos = 3;
 
-    unsigned int graph_pixels_width;
-    unsigned int graph_pixels_height;
-    unsigned int graph_tick_pixels_interval;
+    points[2].value = 1;
+    points[2].data_x_pos = 4;
+    points[2].data_y_pos = 4;
 
-    set_graph_dimensions(&graph_pixels_width, &graph_pixels_height, &graph_tick_pixels_interval, points);
+    points[3].value = 1;
+    points[3].data_x_pos = 5;
+    points[3].data_y_pos = 5;
+
+    points[4].value = 1;
+    points[4].data_x_pos = 6;
+    points[4].data_y_pos = 6;
+
+
+    unsigned int graph_pixels_width = 100;
+    unsigned int graph_pixels_height = 100;
+    unsigned int graph_tick_pixels_interval = 5;
+
+    // set_graph_dimensions(&graph_pixels_width, &graph_pixels_height, &graph_tick_pixels_interval, points);
+
+    int points_length = sizeof(points) / sizeof(points[0]);
+    calculate_graph_positions(points, points_length, graph_tick_pixels_interval);
 
     int raster_row_length = (graph_pixels_width * PIXEL_LENGTH) + 1;   // the number of characters representing pixels in a row times 9 digits for the triplet and each of their white spaces
     int raster_length = (raster_row_length * graph_pixels_height) + 1; // the number of characters in total as a single line this is the length of all the pixels
@@ -167,7 +167,7 @@ int main()
     int hexcodes[raster_length];
     memset(hexcodes, 0, sizeof(hexcodes));
 
-    generate_hexcodes(hexcodes, raster_row_length, graph_pixels_width, graph_pixels_height, graph_tick_pixels_interval, points);
+    generate_hexcodes(hexcodes, raster_row_length, graph_pixels_width, graph_pixels_height, graph_tick_pixels_interval, points, points_length);
 
     paint_raster(raster, raster_row_length, hexcodes, graph_pixels_width, graph_pixels_height);
 
