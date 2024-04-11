@@ -4,8 +4,7 @@
 #include <math.h>
 
 static unsigned int PIXEL_LENGTH = 12;
-static unsigned int GRAPH_SIZE_SCALE = 10;
-static unsigned int GRAPH_TICK_PIXELS_DEFAULT_INTERVAL = 10;
+static unsigned int GRAPH_SIZE_SCALE = 20;
 
 struct Point
 {
@@ -89,11 +88,11 @@ void generate_hexcodes(int *hexcodes, unsigned int raster_row_length, unsigned i
                 hexcodes[hex_index] = 0x000000;
             }
             // ticks on the axis
-            if (row_pos % GRAPH_TICK_PIXELS_DEFAULT_INTERVAL == 0 && (col_pos == graph_origin_y_pos - 1 || col_pos == graph_origin_y_pos + 1))
+            if (row_pos % GRAPH_SIZE_SCALE == 0 && (col_pos == graph_origin_y_pos - 1 || col_pos == graph_origin_y_pos + 1))
             {
                 hexcodes[hex_index] = 0x000000;
             }
-            if (col_pos % GRAPH_TICK_PIXELS_DEFAULT_INTERVAL == 0 && (row_pos == graph_origin_x_pos - 1 || row_pos == graph_origin_x_pos + 1))
+            if (col_pos % GRAPH_SIZE_SCALE == 0 && (row_pos == graph_origin_x_pos - 1 || row_pos == graph_origin_x_pos + 1))
             {
                 hexcodes[hex_index] = 0x000000;
             }
@@ -152,14 +151,16 @@ int main()
     unsigned int points_length = sizeof(points) / sizeof(points[0]);
     calculate_graph_size(points, points_length, &graph_pixels_width, &graph_pixels_height);
 
-    unsigned int raster_row_length = (graph_pixels_width * PIXEL_LENGTH) + 1;          // the number of characters representing pixels in a row times 9 digits for the triplet and each of their white spaces
-    unsigned long raster_length = (long)(raster_row_length * graph_pixels_height + 1); // the number of characters in total as a single line this is the length of all the pixels
+    unsigned int raster_row_length = graph_pixels_width * PIXEL_LENGTH + 1;          // the number of characters representing pixels in a row times 9 digits for the triplet and each of their white spaces
+    unsigned long raster_length = raster_row_length * graph_pixels_height + 1; // the number of characters in total as a single line this is the length of all the pixels
 
-    char raster[raster_length];
-    memset(raster, 0, sizeof(raster));
+    // char raster[raster_length];
+    // memset(raster, 0, sizeof(raster));
+    char *raster = (char *) calloc(raster_length, sizeof(char));
 
-    int hexcodes[raster_length];
-    memset(hexcodes, 0, sizeof(hexcodes));
+    // int hexcodes[raster_length];
+    // memset(hexcodes, 0, sizeof(hexcodes));
+    int *hexcodes = (int *) calloc(raster_length, sizeof(int));
 
     generate_hexcodes(hexcodes, raster_row_length, graph_pixels_width, graph_pixels_height, points, points_length);
 
