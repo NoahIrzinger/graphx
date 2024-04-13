@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "graphx.h"
+
 static unsigned int PIXEL_LENGTH = 12;
 static unsigned int GRAPH_SIZE_SCALE = 20;
 static unsigned int POINT_RADIUS_SIZE_PIXELS = 5;
@@ -138,19 +140,24 @@ void calculate_graph_size(struct Point *points, unsigned int points_length, unsi
     *graph_pixels_height = abs(furthest_point.data_y_pos * 4 * GRAPH_SIZE_SCALE);
 }
 
-int main()
+int plot_points(unsigned int x_values[], unsigned int x_values_size, unsigned int y_values[], unsigned int y_values_size, unsigned int values[], unsigned int values_size)
 {
-    char path[] = "output/example.ppm";
+    char path[] = "output/plot_points.ppm";
 
     int colour_background = 0x00FF00;
 
-    struct Point points[6] = {
-        {-2, 2, 0, 0, 1},
-        {3, 3, 0, 0, 1},
-        {-5, -5, 0, 0, 1},
-        {9, -9, 0, 0, 1},
-        {4, 4, 0, 0, 1},
-        {6, 6, 0, 0, 1}};
+    if (x_values_size != y_values_size)
+    {
+        return 1;
+    }
+
+    struct Point points[x_values_size];
+
+    for (int i = 0; i < x_values_size; i++)
+    {
+        struct Point p = {x_values[i], y_values[i], 0, 0, values[i]};
+        points[i] = p;
+    }
 
     unsigned int graph_pixels_width, graph_pixels_height;
 
@@ -160,21 +167,18 @@ int main()
     unsigned int raster_row_length = graph_pixels_width * PIXEL_LENGTH + 1;    // the number of characters representing pixels in a row times 9 digits for the triplet and each of their white spaces
     unsigned long raster_length = raster_row_length * graph_pixels_height + 1; // the number of characters in total as a single line this is the length of all the pixels
 
-    // char raster[raster_length];
-    // memset(raster, 0, sizeof(raster));
     char *raster = (char *)malloc(raster_length * sizeof(char));
 
-    // int hexcodes[raster_length];
-    // memset(hexcodes, 0, sizeof(hexcodes));
     int *hexcodes = (int *)calloc(raster_length, sizeof(int));
 
     generate_hexcodes(hexcodes, raster_row_length, graph_pixels_width, graph_pixels_height, points, points_length);
 
     paint_raster(raster, raster_row_length, hexcodes, graph_pixels_width, graph_pixels_height);
 
-    // printf("%s\n", raster_data);
-
     write_raster_to_ppm(raster, path, graph_pixels_width, graph_pixels_height);
+
+    free(raster);
+    free(hexcodes);
 
     return 0;
 }
