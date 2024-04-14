@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "graphx.h"
 
-int main(void)
+int main()
 {
 
     unsigned int x_values[] = {1, 2, 3, 4, 5};

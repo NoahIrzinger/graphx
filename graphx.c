@@ -2,12 +2,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 
 #include "graphx.h"
 
-static unsigned int PIXEL_LENGTH = 12;
-static unsigned int GRAPH_SIZE_SCALE = 20;
-static unsigned int POINT_RADIUS_SIZE_PIXELS = 5;
+#define GRAPH_BACKGROUND_COLOUR 0x00FF00
+#define GRAPH_AXIS_COLOUR 0x000000
+#define GRAPH_POINTS_COLOUR 0x000000
+#define OUTPUT_FILE_PATH "output/plot_points.ppm"
+#define PIXEL_LENGTH 12
+#define GRAPH_SIZE_SCALE 20
+#define GRAPH_POINT_RADIUS_SIZE_PIXELS 5
 
 struct Point
 {
@@ -65,11 +70,6 @@ void paint_raster(char *raster, unsigned int raster_row_length, int hex_values[]
 
 void generate_hexcodes(int *hexcodes, unsigned int raster_row_length, unsigned int graph_pixels_width, unsigned int graph_pixels_height, struct Point points[], unsigned int points_length)
 {
-    int PLOT_Y_AXIS_OFFSET = 5;
-    int PLOT_Y_AXIS_WIDTH = 1;
-    int PLOT_X_AXIS_OFFSET = 5;
-    int PLOT_X_AXIS_WIDTH = 1;
-
     int graph_origin_y_pos = graph_pixels_height / 2;
     int graph_origin_x_pos = graph_pixels_width / 2;
 
@@ -80,24 +80,24 @@ void generate_hexcodes(int *hexcodes, unsigned int raster_row_length, unsigned i
             int hex_index = row_pos * raster_row_length + col_pos;
 
             // fill background
-            hexcodes[hex_index] = 0x00FF00;
+            hexcodes[hex_index] = GRAPH_BACKGROUND_COLOUR;
             // x,y
             if (col_pos == graph_origin_y_pos)
             {
-                hexcodes[hex_index] = 0x000000;
+                hexcodes[hex_index] = GRAPH_AXIS_COLOUR;
             }
             if (row_pos == graph_origin_x_pos)
             {
-                hexcodes[hex_index] = 0x000000;
+                hexcodes[hex_index] = GRAPH_AXIS_COLOUR;
             }
             // ticks on the axis
             if (row_pos % GRAPH_SIZE_SCALE == 0 && (col_pos == graph_origin_y_pos - 1 || col_pos == graph_origin_y_pos + 1))
             {
-                hexcodes[hex_index] = 0x000000;
+                hexcodes[hex_index] = GRAPH_AXIS_COLOUR;
             }
             if (col_pos % GRAPH_SIZE_SCALE == 0 && (row_pos == graph_origin_x_pos - 1 || row_pos == graph_origin_x_pos + 1))
             {
-                hexcodes[hex_index] = 0x000000;
+                hexcodes[hex_index] = GRAPH_AXIS_COLOUR;
             }
             // plot points
             for (int i = 0; i < points_length; i++)
@@ -106,13 +106,13 @@ void generate_hexcodes(int *hexcodes, unsigned int raster_row_length, unsigned i
                 int graph_y_pos = graph_origin_y_pos - points[i].data_y_pos * GRAPH_SIZE_SCALE;
                 if (col_pos == graph_x_pos && row_pos == graph_y_pos)
                 {
-                    hexcodes[hex_index] = 0x000000;
+                    hexcodes[hex_index] = GRAPH_POINTS_COLOUR;
                 }
                 // scale up points size on graph
                 if (
-                    col_pos <= graph_x_pos + POINT_RADIUS_SIZE_PIXELS && col_pos >= graph_x_pos - POINT_RADIUS_SIZE_PIXELS && row_pos <= graph_y_pos + POINT_RADIUS_SIZE_PIXELS && row_pos >= graph_y_pos - POINT_RADIUS_SIZE_PIXELS)
+                    col_pos <= graph_x_pos + GRAPH_POINT_RADIUS_SIZE_PIXELS && col_pos >= graph_x_pos - GRAPH_POINT_RADIUS_SIZE_PIXELS && row_pos <= graph_y_pos + GRAPH_POINT_RADIUS_SIZE_PIXELS && row_pos >= graph_y_pos - GRAPH_POINT_RADIUS_SIZE_PIXELS)
                 {
-                    hexcodes[hex_index] = 0x000000;
+                    hexcodes[hex_index] = GRAPH_POINTS_COLOUR;
                 }
             }
         }
@@ -140,42 +140,50 @@ void calculate_graph_size(struct Point *points, unsigned int points_length, unsi
     *graph_pixels_height = abs(furthest_point.data_y_pos * 4 * GRAPH_SIZE_SCALE);
 }
 
-int plot_points(unsigned int x_values[], unsigned int x_values_size, unsigned int y_values[], unsigned int y_values_size, unsigned int values[], unsigned int values_size)
+int validate_input_data(unsigned int x_values[], unsigned int x_values_size, unsigned int y_values[], unsigned int y_values_size, unsigned int values[], unsigned int values_size)
 {
-    char path[] = "output/plot_points.ppm";
-
-    int colour_background = 0x00FF00;
-
-    if (x_values_size != y_values_size)
+    if (x_values_size != y_values_size || x_values_size != values_size || y_values_size != values_size)
     {
+        printf("the input arrays are not equal\n");
         return 1;
     }
+    return 0;
+}
 
-    struct Point points[x_values_size];
-
-    for (int i = 0; i < x_values_size; i++)
+void generate_points(struct Point *points, unsigned int number_of_points, unsigned int x_values[], unsigned int y_values[], unsigned int values[])
+{
+    for (int i = 0; i < number_of_points; i++)
     {
         struct Point p = {x_values[i], y_values[i], 0, 0, values[i]};
         points[i] = p;
     }
+}
+
+int plot_points(unsigned int x_values[], unsigned int x_values_size, unsigned int y_values[], unsigned int y_values_size, unsigned int values[], unsigned int values_size)
+{
+    int err = validate_input_data(x_values, x_values_size, y_values, y_values_size, values, values_size);
+    if (err != 0)
+    {
+        return err;
+    }
+
+    struct Point points[values_size];
+    generate_points(points, values_size, x_values, y_values, values);
 
     unsigned int graph_pixels_width, graph_pixels_height;
-
-    unsigned int points_length = sizeof(points) / sizeof(points[0]);
-    calculate_graph_size(points, points_length, &graph_pixels_width, &graph_pixels_height);
+    calculate_graph_size(points, values_size, &graph_pixels_width, &graph_pixels_height);
 
     unsigned int raster_row_length = graph_pixels_width * PIXEL_LENGTH + 1;    // the number of characters representing pixels in a row times 9 digits for the triplet and each of their white spaces
     unsigned long raster_length = raster_row_length * graph_pixels_height + 1; // the number of characters in total as a single line this is the length of all the pixels
 
     char *raster = (char *)malloc(raster_length * sizeof(char));
+    int *hexcodes = (int *)malloc(raster_length * sizeof(int));
 
-    int *hexcodes = (int *)calloc(raster_length, sizeof(int));
-
-    generate_hexcodes(hexcodes, raster_row_length, graph_pixels_width, graph_pixels_height, points, points_length);
+    generate_hexcodes(hexcodes, raster_row_length, graph_pixels_width, graph_pixels_height, points, values_size);
 
     paint_raster(raster, raster_row_length, hexcodes, graph_pixels_width, graph_pixels_height);
 
-    write_raster_to_ppm(raster, path, graph_pixels_width, graph_pixels_height);
+    write_raster_to_ppm(raster, OUTPUT_FILE_PATH, graph_pixels_width, graph_pixels_height);
 
     free(raster);
     free(hexcodes);
