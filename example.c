@@ -1,11 +1,11 @@
 #include <stdio.h>
+
 #include "graphx.h"
 
 int main()
 {
-
-    unsigned int x_values[] = {1, 2, 3, 4, 5};
-    unsigned int y_values[] = {1, 2, 3, 4, 5};
+    unsigned int x_values[] = {1, 5, 2, 3, 4};
+    unsigned int y_values[] = {1, 5, 2, 3, 4};
     unsigned int values[] = {1, 2, 3, 4, 5};
 
     unsigned int x_values_size = sizeof(x_values) / sizeof(x_values[0]);

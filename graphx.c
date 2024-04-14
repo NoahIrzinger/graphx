@@ -12,7 +12,7 @@
 #define OUTPUT_FILE_PATH "output/plot_points.ppm"
 #define PIXEL_LENGTH 12
 #define GRAPH_SIZE_SCALE 20
-#define GRAPH_POINT_RADIUS_SIZE_PIXELS 5
+#define GRAPH_POINT_RADIUS_SIZE_PIXELS 2
 
 struct Point
 {
@@ -64,8 +64,6 @@ void paint_raster(char *raster, unsigned int raster_row_length, int hex_values[]
     }
 
     strcat(raster, "\0");
-
-    // printf("%s\n", raster);
 }
 
 void generate_hexcodes(int *hexcodes, unsigned int raster_row_length, unsigned int graph_pixels_width, unsigned int graph_pixels_height, struct Point points[], unsigned int points_length)
@@ -114,6 +112,36 @@ void generate_hexcodes(int *hexcodes, unsigned int raster_row_length, unsigned i
                 {
                     hexcodes[hex_index] = GRAPH_POINTS_COLOUR;
                 }
+                // draw line graph
+                if (i < points_length - 1)
+                {
+                    int next_graph_x_pos = points[i + 1].data_x_pos * GRAPH_SIZE_SCALE + graph_origin_x_pos;
+                    int next_graph_y_pos = graph_origin_y_pos - points[i + 1].data_y_pos * GRAPH_SIZE_SCALE;
+
+                    if (col_pos > graph_x_pos && col_pos < next_graph_x_pos)
+                    {
+                        double y_diff = next_graph_y_pos - graph_y_pos;
+                        double x_diff = next_graph_x_pos - graph_x_pos;
+
+                        if (x_diff != 0)
+                        {
+                            double points_slope = y_diff / x_diff;
+
+                            double cur_y_diff = next_graph_y_pos - row_pos;
+                            double cur_x_diff = next_graph_x_pos - col_pos;
+
+                            if (cur_y_diff != 0)
+                            {
+                                double cur_slope = cur_y_diff / cur_x_diff;
+
+                                if (cur_slope == points_slope)
+                                {
+                                    hexcodes[hex_index] = GRAPH_POINTS_COLOUR;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -150,6 +178,11 @@ int validate_input_data(unsigned int x_values[], unsigned int x_values_size, uns
     return 0;
 }
 
+int compare_points(const void *point_a, const void *point_b)
+{
+    return (((struct Point *)point_a)->data_x_pos - ((struct Point *)point_b)->data_y_pos);
+}
+
 void generate_points(struct Point *points, unsigned int number_of_points, unsigned int x_values[], unsigned int y_values[], unsigned int values[])
 {
     for (int i = 0; i < number_of_points; i++)
@@ -157,6 +190,7 @@ void generate_points(struct Point *points, unsigned int number_of_points, unsign
         struct Point p = {x_values[i], y_values[i], 0, 0, values[i]};
         points[i] = p;
     }
+    qsort(points, number_of_points, sizeof(struct Point), compare_points);
 }
 
 int plot_points(unsigned int x_values[], unsigned int x_values_size, unsigned int y_values[], unsigned int y_values_size, unsigned int values[], unsigned int values_size)
