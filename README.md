@@ -1,36 +1,30 @@
-# graphx.c
+# graw.c
 
-This is a very simple graphing library written in C.
+Graphical Drawing Library
 
-## Project Roadmap
+## Overview
 
-1. Write graph visualization to PPM file format output.
-1. Rendering engine for basic 2D cartisian coordinate system.
-1. Define Point data type and associated containers.
-1. In-memory data processing system to map Points to coordinate system in rendering engine.
+This library generates an output file as a rendered image of two-dimensional input data in Cartisian coordinates.
 
-## Architecture
+## Interface
 
-The project is broken down in to the following components:
+#### function
+### points_plot
 
-### Data Processor
+    int points_plot(int x_values[], int y_values[], int values[], unsigned int points_size);
 
-Defines the schema and data structures for handling the visualization data including formatting and parsing.
+Parses a pair of coordinates (X,Y) and their corresponding value into a line plot.
 
-### Graph Painter.
+The function will write a **P3** variant [Portable Pixel Map](https://netpbm.sourceforge.net/doc/ppm.html) file to at the path: `outputs/plot_points.ppm`.
 
-Handles generating pixel colour values and orienting them in the visualization.
+## Testing
 
-In visual form, a two dimensional array of pixels with length and width will have each individual index map to an integer value in a "2D raster matrix"
+Executing the main function in `example.c` with generate a test image.
 
-This data is also represented in memory as a series of hexadecimal integers in an seperate one dimensional array as a "1D raster array"
+The `graw.py` file uses [ctypes](https://docs.python.org/3/library/ctypes.html) allow usage of `graw.c` interface as a foriegn function library to extend its usage into Python.
 
-Painting is done by specifying the desired pixel colour at a length and width index in the raster matrix and transfering that value to the same corresponding location in the raster array.
+#### On a Linux machine run:
 
-### File Writer
+`c -fPIC -shared -o graw.so graw.c` - to build the shared library
 
-Writes raster data as a specified file type to a given path.
-
-The writer supports the following formats:
-
-1. PPM
+ `python graw.py` - to run generate the test visualization from the Python environment

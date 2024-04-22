@@ -8,7 +8,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
-                "${fileDirname}/graphx.c",
+                "${fileDirname}/graw.c",
                 "-o",
                 "${fileDirname}/bin/${fileBasenameNoExtension}",
                 "-lm"

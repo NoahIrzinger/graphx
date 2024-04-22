@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "graphx.h"
+#include "graw.h"
 
 #define ARRAY_SIZE 100
 

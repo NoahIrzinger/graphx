@@ -6,14 +6,14 @@ def create_time_series(length=100):
     x = np.arange(0, length)
     
     # Adjust the y values to start at the origin and oscillate. Also ensure integer values.
-    y = (np.sin(x * 0.1) * np.cos(x * 0.2) * 100).astype(int)
+    y = (np.sin(x * 0.1) * np.cos(x * 0.2) * 10).astype(int)
     
     # Compute values as the product of x and y, then convert to integers
     values = (x * y).astype(int)
     
     return x, y, values
 
-so_file = "./graphx.so"
+so_file = "./graw.so"
 lib = ctypes.CDLL(so_file)
 
 print(type(lib))
