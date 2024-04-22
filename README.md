@@ -25,6 +25,6 @@ The `graw.py` file uses [ctypes](https://docs.python.org/3/library/ctypes.html) 
 
 #### On a Linux machine run:
 
-`c -fPIC -shared -o graw.so graw.c` - to build the shared library
+`cc -fPIC -shared -o graw.so graw.c` - to build the shared library
 
  `python graw.py` - to run generate the test visualization from the Python environment
